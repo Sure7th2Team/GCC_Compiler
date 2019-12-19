@@ -1,4 +1,4 @@
-digraph main {
+digraph hjtest {
 
   main [shape=rectangle]
   A [shape=rectangle]

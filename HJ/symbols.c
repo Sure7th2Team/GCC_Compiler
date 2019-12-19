@@ -26,7 +26,7 @@ char imageName[50];
 void initSymbol( char *image )
 {
   int from, to;
-
+  
   strcpy( imageName, image );
 
   for ( from = 0 ; from < MAX_FUNCTIONS ; from++ ) {
@@ -151,8 +151,10 @@ void emitSymbols( void )
     printf("Couldn't open graph.dot\n");
     exit(0);
   }
+// HJ modified dot file name
+  char *newImage = strtok(imageName, ".");
 
-  fprintf(fp, "digraph %s {\n\n", imageName );
+  fprintf(fp, "digraph %s {\n\n", newImage );
 
   /* Identify node shapes */
   for (from = 0 ; from < MAX_FUNCTIONS ; from++) {
