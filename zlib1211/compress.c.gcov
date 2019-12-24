@@ -1,0 +1,88 @@
+        -:    0:Source:compress.c
+        -:    0:Programs:8
+        -:    1:/* compress.c -- compress a memory buffer
+        -:    2: * Copyright (C) 1995-2005, 2014, 2016 Jean-loup Gailly, Mark Adler
+        -:    3: * For conditions of distribution and use, see copyright notice in zlib.h
+        -:    4: */
+        -:    5:
+        -:    6:/* @(#) $Id$ */
+        -:    7:
+        -:    8:#define ZLIB_INTERNAL
+        -:    9:#include "zlib.h"
+        -:   10:
+        -:   11:/* ===========================================================================
+        -:   12:     Compresses the source buffer into the destination buffer. The level
+        -:   13:   parameter has the same meaning as in deflateInit.  sourceLen is the byte
+        -:   14:   length of the source buffer. Upon entry, destLen is the total size of the
+        -:   15:   destination buffer, which must be at least 0.1% larger than sourceLen plus
+        -:   16:   12 bytes. Upon exit, destLen is the actual size of the compressed buffer.
+        -:   17:
+        -:   18:     compress2 returns Z_OK if success, Z_MEM_ERROR if there was not enough
+        -:   19:   memory, Z_BUF_ERROR if there was not enough room in the output buffer,
+        -:   20:   Z_STREAM_ERROR if the level parameter is invalid.
+        -:   21:*/
+        1:   22:int ZEXPORT compress2 (dest, destLen, source, sourceLen, level)
+        -:   23:    Bytef *dest;
+        -:   24:    uLongf *destLen;
+        -:   25:    const Bytef *source;
+        -:   26:    uLong sourceLen;
+        -:   27:    int level;
+        -:   28:{
+        -:   29:    z_stream stream;
+        -:   30:    int err;
+        1:   31:    const uInt max = (uInt)-1;
+        -:   32:    uLong left;
+        -:   33:
+        1:   34:    left = *destLen;
+        1:   35:    *destLen = 0;
+        -:   36:
+        1:   37:    stream.zalloc = (alloc_func)0;
+        1:   38:    stream.zfree = (free_func)0;
+        1:   39:    stream.opaque = (voidpf)0;
+        -:   40:
+        1:   41:    err = deflateInit(&stream, level);
+        1:   42:    if (err != Z_OK) return err;
+        -:   43:
+        1:   44:    stream.next_out = dest;
+        1:   45:    stream.avail_out = 0;
+        1:   46:    stream.next_in = (z_const Bytef *)source;
+        1:   47:    stream.avail_in = 0;
+        -:   48:
+        -:   49:    do {
+        1:   50:        if (stream.avail_out == 0) {
+        1:   51:            stream.avail_out = left > (uLong)max ? max : (uInt)left;
+        1:   52:            left -= stream.avail_out;
+        -:   53:        }
+        1:   54:        if (stream.avail_in == 0) {
+        1:   55:            stream.avail_in = sourceLen > (uLong)max ? max : (uInt)sourceLen;
+        1:   56:            sourceLen -= stream.avail_in;
+        -:   57:        }
+        1:   58:        err = deflate(&stream, sourceLen ? Z_NO_FLUSH : Z_FINISH);
+        1:   59:    } while (err == Z_OK);
+        -:   60:
+        1:   61:    *destLen = stream.total_out;
+        1:   62:    deflateEnd(&stream);
+        1:   63:    return err == Z_STREAM_END ? Z_OK : err;
+        -:   64:}
+        -:   65:
+        -:   66:/* ===========================================================================
+        -:   67: */
+        1:   68:int ZEXPORT compress (dest, destLen, source, sourceLen)
+        -:   69:    Bytef *dest;
+        -:   70:    uLongf *destLen;
+        -:   71:    const Bytef *source;
+        -:   72:    uLong sourceLen;
+        -:   73:{
+        1:   74:    return compress2(dest, destLen, source, sourceLen, Z_DEFAULT_COMPRESSION);
+        -:   75:}
+        -:   76:
+        -:   77:/* ===========================================================================
+        -:   78:     If the default memLevel or windowBits for deflateInit() is changed, then
+        -:   79:   this function needs to be updated.
+        -:   80: */
+    #####:   81:uLong ZEXPORT compressBound (sourceLen)
+        -:   82:    uLong sourceLen;
+        -:   83:{
+    #####:   84:    return sourceLen + (sourceLen >> 12) + (sourceLen >> 14) +
+    #####:   85:           (sourceLen >> 25) + 13;
+        -:   86:}

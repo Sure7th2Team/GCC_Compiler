@@ -1,0 +1,27 @@
+        -:    0:Source:gzclose.c
+        -:    0:Programs:8
+        -:    1:/* gzclose.c -- zlib gzclose() function
+        -:    2: * Copyright (C) 2004, 2010 Mark Adler
+        -:    3: * For conditions of distribution and use, see copyright notice in zlib.h
+        -:    4: */
+        -:    5:
+        -:    6:#include "gzguts.h"
+        -:    7:
+        -:    8:/* gzclose() is in a separate file so that it is linked in only if it is used.
+        -:    9:   That way the other gzclose functions can be used instead to avoid linking in
+        -:   10:   unneeded compression or decompression routines. */
+        2:   11:int ZEXPORT gzclose(file)
+        -:   12:    gzFile file;
+        -:   13:{
+        -:   14:#ifndef NO_GZCOMPRESS
+        -:   15:    gz_statep state;
+        -:   16:
+        2:   17:    if (file == NULL)
+    #####:   18:        return Z_STREAM_ERROR;
+        2:   19:    state = (gz_statep)file;
+        -:   20:
+        2:   21:    return state->mode == GZ_READ ? gzclose_r(file) : gzclose_w(file);
+        -:   22:#else
+        -:   23:    return gzclose_r(file);
+        -:   24:#endif
+        -:   25:}
